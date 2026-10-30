@@ -142,7 +142,7 @@ def home():
 
 @app.post("/recommend", response_class=HTMLResponse)
 def recommend(user_query: str = Form(...)):
-    groq_key = os.environ.get("GROQ_API_KEY", "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")
+    groq_key = os.environ.get("GROQ_API_KEY", "")
     weather_info = get_weather_context(user_query)
     
     system_prompt = f"""You are VirtualCloset AI — an exceptionally intelligent, creative, and context-aware personal fashion stylist agent.
