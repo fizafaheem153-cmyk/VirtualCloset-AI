@@ -2,34 +2,52 @@ from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
 import os
 import json
-import requests
+from langchain_groq import ChatGroq
+from langchain_core.tools import tool
+from langchain.agents import create_agent
 
 app = FastAPI(title="VirtualCloset AI Agent")
 
-# Wardrobe Dataset
+# Wardrobe Inventory Dataset
 CLOSET_DATA = [
     {"item_id": "TOP-01", "name": "Chiffon Embroidered Long Shirt", "category": "top", "fabric": "chiffon", "color": "maroon", "formality": "festive", "comfort_rating": 8},
     {"item_id": "TOP-02", "name": "Silk Anarkali Frock", "category": "top", "fabric": "silk", "color": "emerald green", "formality": "formal", "comfort_rating": 7},
+    {"item_id": "TOP-03", "name": "Black Velvet Embroidered Kurti", "category": "top", "fabric": "velvet", "color": "black", "formality": "formal", "comfort_rating": 9},
     {"item_id": "TOP-05", "name": "Cotton A-Line Kurti", "category": "top", "fabric": "cotton", "color": "navy blue", "formality": "casual", "comfort_rating": 10},
     {"item_id": "BOT-01", "name": "Silk Straight Trousers", "category": "bottom", "fabric": "silk", "color": "ivory", "formality": "festive", "comfort_rating": 9},
+    {"item_id": "BOT-02", "name": "Black Bell-Bottom Trousers", "category": "bottom", "fabric": "cotton/silk", "color": "black", "formality": "formal", "comfort_rating": 9},
     {"item_id": "BOT-03", "name": "Cotton Straight Trousers", "category": "bottom", "fabric": "cotton", "color": "white", "formality": "casual", "comfort_rating": 10},
     {"item_id": "SH-01", "name": "Embellished Khussa", "category": "footwear", "fabric": "leather/silk", "color": "gold", "formality": "festive", "comfort_rating": 7},
+    {"item_id": "SH-02", "name": "Black Strap Heels", "category": "footwear", "fabric": "leather", "color": "black", "formality": "formal", "comfort_rating": 8},
     {"item_id": "SH-03", "name": "Minimalist Leather Slides", "category": "footwear", "fabric": "leather", "color": "tan", "formality": "casual", "comfort_rating": 10},
     {"item_id": "DUP-01", "name": "Chiffon Printed Dupatta", "category": "accessory", "fabric": "chiffon", "color": "multicolor maroon/gold", "formality": "festive", "comfort_rating": 9},
-    {"item_id": "ACC-01", "name": "Kundan Jhumkas", "category": "accessory", "fabric": "metal/pearl", "color": "gold/white", "formality": "festive", "comfort_rating": 8}
+    {"item_id": "ACC-01", "name": "Kundan Jhumkas", "category": "accessory", "fabric": "metal/pearl", "color": "gold/white", "formality": "festive", "comfort_rating": 8},
+    {"item_id": "ACC-02", "name": "Silver Statement Earrings", "category": "accessory", "fabric": "silver", "color": "silver", "formality": "formal", "comfort_rating": 9}
 ]
 
-def get_weather(city: str) -> str:
-    city_clean = city.lower().strip()
+@tool
+def get_closet_items(category: str = "", formality: str = "", color: str = "") -> list:
+    """Searches digital wardrobe inventory filtered by category, formality, or color preference."""
+    filtered = CLOSET_DATA
+    if category:
+        filtered = [i for i in filtered if i["category"].lower() == category.lower()]
+    if formality:
+        filtered = [i for i in filtered if i["formality"].lower() == formality.lower()]
+    if color:
+        filtered = [i for i in filtered if color.lower() in i["color"].lower()]
+    return filtered
+
+@tool
+def get_weather_context(city: str) -> dict:
+    """Retrieves weather conditions for outfit planning."""
     weather_db = {
-        "karachi": "32°C, humid and warm with 78% humidity",
-        "lahore": "28°C, pleasant evening breeze",
-        "islamabad": "22°C, cool and clear skies"
+        "karachi": {"temperature_c": 32, "humidity_pct": 78, "condition": "humid & warm"},
+        "lahore": {"temperature_c": 28, "humidity_pct": 55, "condition": "pleasant breeze"},
+        "islamabad": {"temperature_c": 22, "humidity_pct": 40, "condition": "cool"}
     }
-    for key, val in weather_db.items():
-        if key in city_clean:
-            return val
-    return "30°C, warm ambient temperature"
+    return weather_db.get(city.lower().strip(), {"temperature_c": 30, "humidity_pct": 65, "condition": "moderate"})
+
+TOOLS = [get_closet_items, get_weather_context]
 
 @app.get("/", response_class=HTMLResponse)
 def home():
@@ -92,9 +110,7 @@ def home():
                 outline: none;
                 transition: border 0.3s ease;
             }
-            textarea:focus {
-                border-color: #d9929d;
-            }
+            textarea:focus { border-color: #d9929d; }
             button {
                 background: linear-gradient(135deg, #e6a5af 0%, #c97987 100%);
                 color: white;
@@ -122,7 +138,7 @@ def home():
             <p class="subtitle">Your Agentic Wardrobe & Event Stylist</p>
             <form action="/recommend" method="post">
                 <label>Describe your occasion, location & styling preferences:</label>
-                <textarea name="user_query">I am attending a festive indoor dinner in Karachi tonight. I want a comfortable, elegant outfit with maroon or gold tones.</textarea>
+                <textarea name="user_query">I am attending a dinner party in Karachi and want to dress in something black. Style me!</textarea>
                 <button type="submit">🌸 Curate My Outfit Recommendation</button>
             </form>
         </div>
@@ -133,31 +149,17 @@ def home():
 @app.post("/recommend", response_class=HTMLResponse)
 def recommend(user_query: str = Form(...)):
     groq_key = os.environ.get("GROQ_API_KEY", "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")
-    weather_info = get_weather(user_query)
+    os.environ["GROQ_API_KEY"] = groq_key
     
-    prompt = f"""You are an expert fashion stylist.
-Context:
-- Weather: {weather_info}
-- Closet Inventory: {json.dumps(CLOSET_DATA)}
-- User Request: {user_query}
-
-Select matching items from the inventory. Format output nicely with Top, Bottom, Footwear, Dupatta/Accessories, and 3 quick styling tips."""
-
-    headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
-    payload = {
-        "model": "qwen-2.5-32b",
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.3
-    }
+    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.2)
+    system_prompt = """You are VirtualCloset AI, an expert personal wardrobe stylist.
+    1. Check `get_weather_context` first if a city is mentioned or implied.
+    2. Search `get_closet_items` to retrieve wardrobe choices based on user preferences.
+    3. Synthesize a unique, custom outfit recommendation matching the exact request."""
     
-    try:
-        resp = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=12)
-        if resp.status_code == 200:
-            outfit_text = resp.json()["choices"][0]["message"]["content"].replace("\n", "<br>")
-        else:
-            outfit_text = "✨ <b>Selected Outfit:</b> Maroon Chiffon Long Shirt paired with Silk Straight Trousers, Gold Khussas, and Kundan Earrings — lightweight and perfect for Karachi weather!"
-    except Exception:
-        outfit_text = "✨ <b>Selected Outfit:</b> Maroon Chiffon Long Shirt paired with Silk Straight Trousers, Gold Khussas, and Kundan Earrings — lightweight and perfect for Karachi weather!"
+    agent = create_agent(llm, TOOLS, system_prompt=system_prompt)
+    result = agent.invoke({"messages": [{"role": "user", "content": user_query}]})
+    outfit_text = result["messages"][-1].content.replace("\n", "<br>")
 
     return f"""
     <!DOCTYPE html>
