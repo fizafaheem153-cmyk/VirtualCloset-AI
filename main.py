@@ -6,47 +6,37 @@ import requests
 
 app = FastAPI(title="VirtualCloset AI Agent")
 
-# DYNAMIC CLOSET INVENTORY DATABASE
+# COMPREHENSIVE DYNAMIC VIRTUAL CLOSET DATABASE
 CLOSET_DATA = [
-    # --- WOMEN'S EASTERN ---
-    {"item_id": "WE-01", "name": "Chiffon Embroidered Long Shirt", "gender": "female", "style": "eastern", "category": "top", "fabric": "chiffon", "color": "maroon", "formality": "festive"},
-    {"item_id": "WE-02", "name": "Silk Anarkali Frock", "gender": "female", "style": "eastern", "category": "top", "fabric": "silk", "color": "emerald green", "formality": "formal/wedding"},
-    {"item_id": "WE-03", "name": "Black Velvet Embroidered Kurti", "gender": "female", "style": "eastern", "category": "top", "fabric": "velvet", "color": "black", "formality": "formal/party"},
-    {"item_id": "WE-04", "name": "Cotton A-Line Printed Kurti", "gender": "female", "style": "eastern", "category": "top", "fabric": "cotton", "color": "navy blue", "formality": "casual/dayout"},
-    {"item_id": "WE-05", "name": "Raw Silk Straight Trousers", "gender": "female", "style": "eastern", "category": "bottom", "fabric": "raw silk", "color": "ivory", "formality": "festive/formal"},
-    {"item_id": "WE-06", "name": "Cotton Straight Pants", "gender": "female", "style": "eastern", "category": "bottom", "fabric": "cotton", "color": "white", "formality": "casual/dayout"},
-
-    # --- WOMEN'S WESTERN ---
-    {"item_id": "WW-01", "name": "Floral Summer Midi Dress", "gender": "female", "style": "western", "category": "dress", "fabric": "viscose", "color": "yellow/floral", "formality": "casual/dayout"},
-    {"item_id": "WW-02", "name": "Black Satin Evening Maxi Dress", "gender": "female", "style": "western", "category": "dress", "fabric": "satin", "color": "black", "formality": "formal/party"},
-    {"item_id": "WW-03", "name": "Classic White Button-Down Shirt", "gender": "female", "style": "western", "category": "top", "fabric": "cotton", "color": "white", "formality": "smart_casual"},
-    {"item_id": "WW-04", "name": "High-Waisted Denim Jeans", "gender": "female", "style": "western", "category": "bottom", "fabric": "denim", "color": "blue", "formality": "casual"},
+    # --- WOMEN'S APPAREL ---
+    {"item_id": "W-01", "name": "Chiffon Embroidered Long Shirt", "gender": "female", "style": "eastern", "category": "top", "fabric": "chiffon", "color": "maroon", "formality": "festive/formal"},
+    {"item_id": "W-02", "name": "Silk Anarkali Frock", "gender": "female", "style": "eastern", "category": "top", "fabric": "silk", "color": "emerald green", "formality": "formal/wedding"},
+    {"item_id": "W-03", "name": "Black Velvet Embroidered Kurti", "gender": "female", "style": "eastern", "category": "top", "fabric": "velvet", "color": "black", "formality": "formal/winter"},
+    {"item_id": "W-04", "name": "Cotton A-Line Printed Kurti", "gender": "female", "style": "eastern", "category": "top", "fabric": "cotton", "color": "navy blue", "formality": "casual/university/dayout"},
+    {"item_id": "W-05", "name": "Lawn Printed Kurti", "gender": "female", "style": "eastern", "category": "top", "fabric": "lawn/cotton", "color": "peach/pastel", "formality": "casual/university"},
+    {"item_id": "W-06", "name": "Floral Summer Midi Dress", "gender": "female", "style": "western", "category": "dress", "fabric": "viscose", "color": "yellow/floral", "formality": "casual/picnic"},
+    {"item_id": "W-07", "name": "Black Satin Evening Maxi Dress", "gender": "female", "style": "western", "category": "dress", "fabric": "satin", "color": "black", "formality": "formal/party"},
+    {"item_id": "W-08", "name": "Classic White Linen Button-Down Shirt", "gender": "female", "style": "western", "category": "top", "fabric": "linen", "color": "white", "formality": "smart_casual"},
+    {"item_id": "W-09", "name": "Warm Wool Trench Coat", "gender": "female", "style": "western", "category": "outerwear", "fabric": "wool", "color": "camel brown", "formality": "winter/travel"},
+    {"item_id": "W-10", "name": "High-Waisted Denim Jeans", "gender": "female", "style": "western", "category": "bottom", "fabric": "denim", "color": "blue", "formality": "casual"},
+    {"item_id": "W-11", "name": "Raw Silk Straight Trousers", "gender": "female", "style": "eastern", "category": "bottom", "fabric": "raw silk", "color": "ivory", "formality": "festive/formal"},
+    {"item_id": "W-12", "name": "Cotton Straight Pants", "gender": "female", "style": "eastern", "category": "bottom", "fabric": "cotton", "color": "white", "formality": "casual/university"},
 
     # --- MEN'S APPAREL ---
-    {"item_id": "ME-01", "name": "Raw Silk Black Kurta Pajama", "gender": "male", "style": "eastern", "category": "full_outfit", "fabric": "silk", "color": "black", "formality": "formal/evening"},
-    {"item_id": "ME-02", "name": "White Cotton Kurta Shalwar", "gender": "male", "style": "eastern", "category": "full_outfit", "fabric": "cotton", "color": "white", "formality": "casual/dayout"},
-    {"item_id": "ME-03", "name": "Jamawar Embroidered Waistcoat", "gender": "male", "style": "eastern", "category": "outerwear", "fabric": "jamawar", "color": "gold/maroon", "formality": "festive"},
-    {"item_id": "MW-01", "name": "Slim-Fit Charcoal Suit", "gender": "male", "style": "western", "category": "suit", "fabric": "wool blend", "color": "charcoal", "formality": "formal"},
-    {"item_id": "MW-02", "name": "Casual Crew-Neck Cotton T-Shirt", "gender": "male", "style": "western", "category": "top", "fabric": "cotton", "color": "black", "formality": "casual/dayout"},
+    {"item_id": "M-01", "name": "Raw Silk Black Kurta Pajama", "gender": "male", "style": "eastern", "category": "full_outfit", "fabric": "silk", "color": "black", "formality": "formal/evening"},
+    {"item_id": "M-02", "name": "White Breathable Cotton Kurta Shalwar", "gender": "male", "style": "eastern", "category": "full_outfit", "fabric": "cotton", "color": "white", "formality": "casual/dayout"},
+    {"item_id": "M-03", "name": "Jamawar Embroidered Waistcoat", "gender": "male", "style": "eastern", "category": "outerwear", "fabric": "jamawar", "color": "gold/maroon", "formality": "festive"},
+    {"item_id": "M-04", "name": "Slim-Fit Charcoal Suit", "gender": "male", "style": "western", "category": "suit", "fabric": "wool blend", "color": "charcoal", "formality": "formal/business"},
+    {"item_id": "M-05", "name": "Casual Crew-Neck Cotton T-Shirt", "gender": "male", "style": "western", "category": "top", "fabric": "cotton", "color": "black", "formality": "casual"},
+    {"item_id": "M-06", "name": "Puffer Winter Jacket", "gender": "male", "style": "western", "category": "outerwear", "fabric": "polyester/down", "color": "navy blue", "formality": "winter/travel"},
 
     # --- FOOTWEAR & ACCESSORIES ---
-    {"item_id": "ACC-01", "name": "Gold Embellished Khussa", "gender": "female", "style": "eastern", "category": "footwear", "fabric": "leather/silk", "color": "gold", "formality": "festive"},
-    {"item_id": "ACC-02", "name": "Black Strap High Heels", "gender": "female", "style": "western", "category": "footwear", "fabric": "leather", "color": "black", "formality": "formal/party"},
-    {"item_id": "ACC-03", "name": "White Canvas Sneakers", "gender": "unisex", "style": "western", "category": "footwear", "fabric": "canvas", "color": "white", "formality": "casual/dayout"},
-    {"item_id": "ACC-04", "name": "Kundan Jhumkas & Statement Ring", "gender": "female", "style": "eastern", "category": "jewelry", "fabric": "metal/pearl", "color": "gold/white", "formality": "festive"}
+    {"item_id": "A-01", "name": "Gold Embellished Khussa", "gender": "female", "style": "eastern", "category": "footwear", "fabric": "leather/silk", "color": "gold", "formality": "festive"},
+    {"item_id": "A-02", "name": "Black Strap High Heels", "gender": "female", "style": "western", "category": "footwear", "fabric": "leather", "color": "black", "formality": "formal/party"},
+    {"item_id": "A-03", "name": "White Canvas Comfortable Sneakers", "gender": "unisex", "style": "western", "category": "footwear", "fabric": "canvas", "color": "white", "formality": "casual/university/travel"},
+    {"item_id": "A-04", "name": "Leather Walking Boots", "gender": "unisex", "style": "western", "category": "footwear", "fabric": "leather", "color": "brown", "formality": "winter/travel"},
+    {"item_id": "A-05", "name": "Kundan Jhumkas & Pearl Statement Jewelry", "gender": "female", "style": "eastern", "category": "jewelry", "fabric": "metal/pearl", "color": "gold/white", "formality": "festive"}
 ]
-
-def get_weather_context(text: str) -> str:
-    t = text.lower()
-    if "lahore" in t:
-        return "Lahore weather: 28°C, pleasant breezy atmosphere. Suitable for comfortable cottons, lawn, or light western dresses."
-    elif "karachi" in t:
-        return "Karachi weather: 32°C, warm & humid (78% humidity). Prioritize light, breathable fabrics."
-    elif "islamabad" in t or "rawalpindi" in t:
-        return "Islamabad/Rawalpindi weather: 22°C, cool pleasant climate."
-    elif "london" in t:
-        return "London weather: 14°C, cool with light drizzle. Layering required."
-    return "Ambient weather: ~26°C pleasant conditions."
 
 @app.get("/", response_class=HTMLResponse)
 def home():
@@ -54,7 +44,7 @@ def home():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>VirtualCloset AI — Personal Stylist Agent</title>
+        <title>VirtualCloset AI — Universal Personal Stylist Agent</title>
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
         <style>
             body {
@@ -129,10 +119,10 @@ def home():
     <body>
         <div class="container">
             <h1>✨ VirtualCloset AI</h1>
-            <p class="subtitle">Your Autonomous Wardrobe Stylist & E-Commerce Recommendation Agent</p>
+            <p class="subtitle">Universal Autonomous Wardrobe Stylist & E-Commerce Recommendation Agent</p>
             <form action="/recommend" method="post">
-                <label>Tell your agent what occasion, city, gender, or outfit style you are looking for:</label>
-                <textarea name="user_query">I am attending a casual DAYOUT in LAHORE. Style a comfortable female outfit for me from my closet!</textarea>
+                <label>Ask your AI agent anything (any city, country, occasion, gender, or style preference):</label>
+                <textarea name="user_query" placeholder="e.g., I am attending a class in University of Karachi. Style a comfortable female outfit for me from my closet!">I am attending a class in University of Karachi. Style a comfortable female outfit for me from my closet!</textarea>
                 <button type="submit">🌸 Curate My Outfit Recommendation</button>
             </form>
         </div>
@@ -143,46 +133,44 @@ def home():
 @app.post("/recommend", response_class=HTMLResponse)
 def recommend(user_query: str = Form(...)):
     groq_key = os.environ.get("GROQ_API_KEY", "")
-    weather_info = get_weather_context(user_query)
     
-    system_prompt = f"""You are VirtualCloset AI — an exceptionally intelligent, creative, and context-aware personal fashion stylist agent.
+    system_prompt = f"""You are VirtualCloset AI — a highly intelligent, context-aware global fashion stylist agent.
 
 USER REQUEST: "{user_query}"
-CITY & WEATHER CONTEXT: "{weather_info}"
-VIRTUAL CLOSET INVENTORY DATABASE:
+
+AVAILABLE DIGITAL CLOSET INVENTORY:
 {json.dumps(CLOSET_DATA, indent=2)}
 
 STRICT AGENT RESPONSIBILITIES:
-1. Deeply analyze the exact user prompt: location/city (Lahore, Karachi, London, etc.), occasion (dayout, picnic, formal dinner, wedding), gender (male/female), and style preference (Eastern/Western).
-2. DYNAMIC MATCHING: Tailor the output specifically to the requested city and event. For a casual DAYOUT in LAHORE, curate a stylish, effortless ensemble (e.g. Cotton A-Line Kurti or Floral Summer Dress with sneakers/sandals) with specific city vibes (like visiting Gulberg or Old City cafes).
-3. CLOSET SELECTION: Select exact matching pieces from the VIRTUAL CLOSET INVENTORY database.
-4. MISSING PIECE E-COMMERCE RECOMMENDATIONS: Identify any missing accessory, handbag, or sunglasses needed to complete the look and explicitly provide an e-commerce shopping recommendation!
-5. FORMATTING: Return a detailed, highly descriptive recommendation using HTML formatting (`<b>`, `<br>`, `<ul>`, `<li>`) covering:
-   - 🌟 **Personalized Style Concept & City Vibe**
-   - 👗 / 👔 **Selected Closet Ensemble** (Top/Dress, Bottom, Footwear)
-   - ☀️ **Weather & Climate Rationale**
+1. REASONING & DESTINATION ANALYSIS: Dynamically evaluate the exact prompt. Identify the location/city, specific event (e.g., university class, museum visit, desert safari, formal party), gender, and style preferences.
+   - Use internal world knowledge to evaluate climate and cultural context for ANY location globally (e.g., University of Karachi requires light, breathable, comfortable cotton/lawn attire suitable for warm weather and campus walking).
+2. CLOSET INVENTORY MATCHING: Pick matching items directly from the AVAILABLE DIGITAL CLOSET INVENTORY.
+3. MISSING ITEM E-COMMERCE RECOMMENDATION: Identify any key item (e.g. tote bag for university books, sunglasses, water bottle, or specific sandals) missing from the closet inventory to complete the outfit and explicitly provide an e-commerce shopping recommendation!
+4. DESCRIPTIVE HTML OUTPUT: Format output cleanly using HTML tags (`<b>`, `<br>`, `<ul>`, `<li>`) with:
+   - 🌍 **Location, Event & Climate Analysis**
+   - 👗 / 👔 **Curated Outfit Ensemble** (Selected from Closet)
    - 🛍️ **Missing Item E-Commerce Recommendation**
-   - ✨ **3 Pro Styling, Accessories & Grooming Tips**"""
+   - ✨ **3 Location-Specific Styling & Comfort Tips**"""
 
     headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
     payload = {
-        "model": "llama-3.3-70b-versatile",
+        "model": "llama3-70b-8192",
         "messages": [
-            {"role": "system", "content": "You are an elite fashion AI stylist."},
+            {"role": "system", "content": "You are an expert global AI fashion agent."},
             {"role": "user", "content": system_prompt}
         ],
-        "temperature": 0.4,
+        "temperature": 0.3,
         "max_tokens": 1000
     }
     
     try:
-        resp = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=12)
+        resp = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=15)
         if resp.status_code == 200:
             outfit_text = resp.json()["choices"][0]["message"]["content"].replace("\n", "<br>")
         else:
-            outfit_text = f"<b>API Error ({resp.status_code}):</b> {resp.text}"
+            outfit_text = f"<b>Styling Agent Alert (Status {resp.status_code}):</b> {resp.text}"
     except Exception as e:
-        outfit_text = f"<b>System Error:</b> {str(e)}"
+        outfit_text = f"<b>Connection Notice:</b> {str(e)}"
 
     return f"""
     <!DOCTYPE html>
