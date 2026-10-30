@@ -6,21 +6,23 @@ import requests
 
 app = FastAPI(title="VirtualCloset AI Agent")
 
-# COMPREHENSIVE DYNAMIC VIRTUAL CLOSET DATABASE
+# COMPREHENSIVE DIGITAL CLOSET DATABASE
 CLOSET_DATA = [
-    # --- WOMEN'S APPAREL ---
+    # --- WOMEN'S EASTERN ---
     {"item_id": "W-01", "name": "Chiffon Embroidered Long Shirt", "gender": "female", "style": "eastern", "category": "top", "fabric": "chiffon", "color": "maroon", "formality": "festive/formal"},
     {"item_id": "W-02", "name": "Silk Anarkali Frock", "gender": "female", "style": "eastern", "category": "top", "fabric": "silk", "color": "emerald green", "formality": "formal/wedding"},
     {"item_id": "W-03", "name": "Black Velvet Embroidered Kurti", "gender": "female", "style": "eastern", "category": "top", "fabric": "velvet", "color": "black", "formality": "formal/winter"},
     {"item_id": "W-04", "name": "Cotton A-Line Printed Kurti", "gender": "female", "style": "eastern", "category": "top", "fabric": "cotton", "color": "navy blue", "formality": "casual/university/dayout"},
     {"item_id": "W-05", "name": "Lawn Printed Kurti", "gender": "female", "style": "eastern", "category": "top", "fabric": "lawn/cotton", "color": "peach/pastel", "formality": "casual/university"},
+    {"item_id": "W-11", "name": "Raw Silk Straight Trousers", "gender": "female", "style": "eastern", "category": "bottom", "fabric": "raw silk", "color": "ivory", "formality": "festive/formal"},
+    {"item_id": "W-12", "name": "Cotton Straight Pants", "gender": "female", "style": "eastern", "category": "bottom", "fabric": "cotton", "color": "white", "formality": "casual/university"},
+
+    # --- WOMEN'S WESTERN ---
     {"item_id": "W-06", "name": "Floral Summer Midi Dress", "gender": "female", "style": "western", "category": "dress", "fabric": "viscose", "color": "yellow/floral", "formality": "casual/picnic"},
     {"item_id": "W-07", "name": "Black Satin Evening Maxi Dress", "gender": "female", "style": "western", "category": "dress", "fabric": "satin", "color": "black", "formality": "formal/party"},
     {"item_id": "W-08", "name": "Classic White Linen Button-Down Shirt", "gender": "female", "style": "western", "category": "top", "fabric": "linen", "color": "white", "formality": "smart_casual"},
     {"item_id": "W-09", "name": "Warm Wool Trench Coat", "gender": "female", "style": "western", "category": "outerwear", "fabric": "wool", "color": "camel brown", "formality": "winter/travel"},
     {"item_id": "W-10", "name": "High-Waisted Denim Jeans", "gender": "female", "style": "western", "category": "bottom", "fabric": "denim", "color": "blue", "formality": "casual"},
-    {"item_id": "W-11", "name": "Raw Silk Straight Trousers", "gender": "female", "style": "eastern", "category": "bottom", "fabric": "raw silk", "color": "ivory", "formality": "festive/formal"},
-    {"item_id": "W-12", "name": "Cotton Straight Pants", "gender": "female", "style": "eastern", "category": "bottom", "fabric": "cotton", "color": "white", "formality": "casual/university"},
 
     # --- MEN'S APPAREL ---
     {"item_id": "M-01", "name": "Raw Silk Black Kurta Pajama", "gender": "male", "style": "eastern", "category": "full_outfit", "fabric": "silk", "color": "black", "formality": "formal/evening"},
@@ -44,7 +46,7 @@ def home():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>VirtualCloset AI — Universal Personal Stylist Agent</title>
+        <title>VirtualCloset AI — Personal Stylist Agent</title>
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
         <style>
             body {
@@ -119,10 +121,10 @@ def home():
     <body>
         <div class="container">
             <h1>✨ VirtualCloset AI</h1>
-            <p class="subtitle">Universal Autonomous Wardrobe Stylist & E-Commerce Recommendation Agent</p>
+            <p class="subtitle">Autonomous Wardrobe Stylist & E-Commerce Recommendation Agent</p>
             <form action="/recommend" method="post">
-                <label>Ask your AI agent anything (any city, country, occasion, gender, or style preference):</label>
-                <textarea name="user_query" placeholder="e.g., I am attending a class in University of Karachi. Style a comfortable female outfit for me from my closet!">I am attending a class in University of Karachi. Style a comfortable female outfit for me from my closet!</textarea>
+                <label>Tell your AI agent what occasion, city, gender, or outfit style you are looking for:</label>
+                <textarea name="user_query" placeholder="e.g., I am attending a class at University of Karachi. Style a comfortable female outfit for me from my closet!">I am attending a class at University of Karachi. Style a comfortable female outfit for me from my closet!</textarea>
                 <button type="submit">🌸 Curate My Outfit Recommendation</button>
             </form>
         </div>
@@ -134,43 +136,48 @@ def home():
 def recommend(user_query: str = Form(...)):
     groq_key = os.environ.get("GROQ_API_KEY", "")
     
-    system_prompt = f"""You are VirtualCloset AI — a highly intelligent, context-aware global fashion stylist agent.
+    system_prompt = f"""You are VirtualCloset AI — a world-class, context-aware global personal fashion stylist.
 
 USER REQUEST: "{user_query}"
 
 AVAILABLE DIGITAL CLOSET INVENTORY:
 {json.dumps(CLOSET_DATA, indent=2)}
 
-STRICT AGENT RESPONSIBILITIES:
-1. REASONING & DESTINATION ANALYSIS: Dynamically evaluate the exact prompt. Identify the location/city, specific event (e.g., university class, museum visit, desert safari, formal party), gender, and style preferences.
-   - Use internal world knowledge to evaluate climate and cultural context for ANY location globally (e.g., University of Karachi requires light, breathable, comfortable cotton/lawn attire suitable for warm weather and campus walking).
-2. CLOSET INVENTORY MATCHING: Pick matching items directly from the AVAILABLE DIGITAL CLOSET INVENTORY.
-3. MISSING ITEM E-COMMERCE RECOMMENDATION: Identify any key item (e.g. tote bag for university books, sunglasses, water bottle, or specific sandals) missing from the closet inventory to complete the outfit and explicitly provide an e-commerce shopping recommendation!
-4. DESCRIPTIVE HTML OUTPUT: Format output cleanly using HTML tags (`<b>`, `<br>`, `<ul>`, `<li>`) with:
-   - 🌍 **Location, Event & Climate Analysis**
-   - 👗 / 👔 **Curated Outfit Ensemble** (Selected from Closet)
-   - 🛍️ **Missing Item E-Commerce Recommendation**
-   - ✨ **3 Location-Specific Styling & Comfort Tips**"""
+EXPERT STYLING DIRECTIVES:
+1. DEEP REASONING: Analyze the exact location, specific activity (university, picnic, formal dinner, travel, museum), gender (male/female), and climate/weather expectations.
+2. DETAILED OUTPUT STRUCTURE: Generate a thorough, multi-part styling response (3 paragraphs total) formatted in clean HTML:
+   - 🌍 **Destination, Climate & Occasion Analysis**: Explain the local setting, expected weather conditions, and styling etiquette.
+   - 👗 / 👔 **Selected Closet Outfit Ensemble**: Detail the exact Top/Outfit, Bottom, Footwear, and Accessories picked from the wardrobe.
+   - 🛍️ **E-Commerce Missing Piece Recommendation**: Identify an accessory, handbag, sunglasses, or outerwear missing from the closet and recommend buying it.
+   - ✨ **Pro Styling, Fabric Comfort & Grooming Tips**: Give 3 practical tips tailored directly to the event.
+3. Keep the tone warm, highly descriptive, professional, and engaging."""
 
     headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
-    payload = {
-        "model": "llama3-70b-8192",
-        "messages": [
-            {"role": "system", "content": "You are an expert global AI fashion agent."},
-            {"role": "user", "content": system_prompt}
-        ],
-        "temperature": 0.3,
-        "max_tokens": 1000
-    }
     
-    try:
-        resp = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=15)
-        if resp.status_code == 200:
-            outfit_text = resp.json()["choices"][0]["message"]["content"].replace("\n", "<br>")
-        else:
-            outfit_text = f"<b>Styling Agent Alert (Status {resp.status_code}):</b> {resp.text}"
-    except Exception as e:
-        outfit_text = f"<b>Connection Notice:</b> {str(e)}"
+    # Try llama-3.1-70b-versatile first, fallback to llama3-70b-8192
+    models_to_try = ["llama-3.1-70b-versatile", "llama3-70b-8192"]
+    outfit_text = None
+
+    for model_name in models_to_try:
+        payload = {
+            "model": model_name,
+            "messages": [
+                {"role": "system", "content": "You are an expert AI fashion stylist."},
+                {"role": "user", "content": system_prompt}
+            ],
+            "temperature": 0.3,
+            "max_tokens": 1200
+        }
+        try:
+            resp = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=15)
+            if resp.status_code == 200:
+                outfit_text = resp.json()["choices"][0]["message"]["content"].replace("\n", "<br>")
+                break
+        except Exception:
+            continue
+
+    if not outfit_text:
+        outfit_text = "<b>Styling Agent Update:</b> Service temporarily unreachable. Please check your GROQ_API_KEY in Vercel settings."
 
     return f"""
     <!DOCTYPE html>
