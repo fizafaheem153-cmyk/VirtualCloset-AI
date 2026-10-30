@@ -8,23 +8,25 @@ app = FastAPI(title="VirtualCloset AI Agent")
 
 # FIZA'S VIRTUAL CLOSET INVENTORY DATABASE
 CLOSET_DATA = [
-    # --- TOPS ---
-    {"item_id": "TOP-01", "name": "Chiffon Embroidered Long Shirt", "gender": "female", "style": "eastern", "category": "top", "fabric": "chiffon", "color": "maroon", "formality": "festive"},
-    {"item_id": "TOP-02", "name": "Silk Anarkali Frock", "gender": "female", "style": "eastern", "category": "top", "fabric": "silk", "color": "emerald green", "formality": "formal/wedding"},
-    {"item_id": "TOP-03", "name": "Black Velvet Embroidered Kurti", "gender": "female", "style": "eastern", "category": "top", "fabric": "velvet", "color": "black", "formality": "formal/party"},
-    {"item_id": "TOP-04", "name": "Cotton A-Line Printed Kurti", "gender": "female", "style": "eastern", "category": "top", "fabric": "cotton", "color": "navy blue", "formality": "casual/picnic"},
-    {"item_id": "TOP-05", "name": "Floral Summer Midi Dress", "gender": "female", "style": "western", "category": "dress", "fabric": "viscose", "color": "yellow/floral", "formality": "casual/picnic"},
-    {"item_id": "TOP-06", "name": "Black Satin Evening Maxi Dress", "gender": "female", "style": "western", "category": "dress", "fabric": "satin", "color": "black", "formality": "formal/party"},
+    # --- WOMEN'S EASTERN ---
+    {"item_id": "WE-01", "name": "Chiffon Embroidered Long Shirt", "gender": "female", "style": "eastern", "category": "top", "fabric": "chiffon", "color": "maroon", "formality": "festive"},
+    {"item_id": "WE-02", "name": "Silk Anarkali Frock", "gender": "female", "style": "eastern", "category": "top", "fabric": "silk", "color": "emerald green", "formality": "formal/wedding"},
+    {"item_id": "WE-03", "name": "Black Velvet Embroidered Kurti", "gender": "female", "style": "eastern", "category": "top", "fabric": "velvet", "color": "black", "formality": "formal/party"},
+    {"item_id": "WE-04", "name": "Cotton A-Line Printed Kurti", "gender": "female", "style": "eastern", "category": "top", "fabric": "cotton", "color": "navy blue", "formality": "casual/picnic"},
+    {"item_id": "WE-05", "name": "Raw Silk Straight Trousers", "gender": "female", "style": "eastern", "category": "bottom", "fabric": "raw silk", "color": "ivory", "formality": "festive/formal"},
+    {"item_id": "WE-06", "name": "Cotton Straight Pants", "gender": "female", "style": "eastern", "category": "bottom", "fabric": "cotton", "color": "white", "formality": "casual/picnic"},
 
-    # --- BOTTOMS ---
-    {"item_id": "BOT-01", "name": "Raw Silk Straight Trousers", "gender": "female", "style": "eastern", "category": "bottom", "fabric": "raw silk", "color": "ivory", "formality": "festive/formal"},
-    {"item_id": "BOT-02", "name": "Cotton Straight Pants", "gender": "female", "style": "eastern", "category": "bottom", "fabric": "cotton", "color": "white", "formality": "casual/picnic"},
-    {"item_id": "BOT-03", "name": "High-Waisted Denim Jeans", "gender": "female", "style": "western", "category": "bottom", "fabric": "denim", "color": "blue", "formality": "casual"},
+    # --- WOMEN'S WESTERN ---
+    {"item_id": "WW-01", "name": "Floral Summer Midi Dress", "gender": "female", "style": "western", "category": "dress", "fabric": "viscose", "color": "yellow/floral", "formality": "casual/picnic"},
+    {"item_id": "WW-02", "name": "Black Satin Evening Maxi Dress", "gender": "female", "style": "western", "category": "dress", "fabric": "satin", "color": "black", "formality": "formal/party"},
+    {"item_id": "WW-03", "name": "Classic White Button-Down Shirt", "gender": "female", "style": "western", "category": "top", "fabric": "cotton", "color": "white", "formality": "smart_casual"},
+    {"item_id": "WW-04", "name": "High-Waisted Denim Jeans", "gender": "female", "style": "western", "category": "bottom", "fabric": "denim", "color": "blue", "formality": "casual"},
 
     # --- MEN'S APPAREL ---
-    {"item_id": "MEN-01", "name": "Raw Silk Black Kurta Pajama", "gender": "male", "style": "eastern", "category": "full_outfit", "fabric": "silk", "color": "black", "formality": "formal/evening"},
-    {"item_id": "MEN-02", "name": "Jamawar Embroidered Waistcoat", "gender": "male", "style": "eastern", "category": "outerwear", "fabric": "jamawar", "color": "gold/maroon", "formality": "festive"},
-    {"item_id": "MEN-03", "name": "Slim-Fit Charcoal Suit", "gender": "male", "style": "western", "category": "suit", "fabric": "wool blend", "color": "charcoal", "formality": "formal"},
+    {"item_id": "ME-01", "name": "Raw Silk Black Kurta Pajama", "gender": "male", "style": "eastern", "category": "full_outfit", "fabric": "silk", "color": "black", "formality": "formal/evening"},
+    {"item_id": "ME-02", "name": "Jamawar Embroidered Waistcoat", "gender": "male", "style": "eastern", "category": "outerwear", "fabric": "jamawar", "color": "gold/maroon", "formality": "festive"},
+    {"item_id": "MW-01", "name": "Slim-Fit Charcoal Suit", "gender": "male", "style": "western", "category": "suit", "fabric": "wool blend", "color": "charcoal", "formality": "formal"},
+    {"item_id": "MW-02", "name": "Casual Crew-Neck Cotton T-Shirt", "gender": "male", "style": "western", "category": "top", "fabric": "cotton", "color": "black", "formality": "casual/picnic"},
 
     # --- FOOTWEAR & ACCESSORIES ---
     {"item_id": "ACC-01", "name": "Gold Embellished Khussa", "gender": "female", "style": "eastern", "category": "footwear", "fabric": "leather/silk", "color": "gold", "formality": "festive"},
@@ -38,7 +40,7 @@ def get_weather(text: str) -> str:
     if "karachi" in t:
         return "Karachi weather: 32°C, warm & humid (78% humidity). Recommend breathable fabrics like lawn, cotton, or chiffon."
     elif "lahore" in t:
-        return "Lahore weather: 28°C, pleasant evening breeze."
+        return "Lahore weather: 28°C, pleasant breeze."
     elif "islamabad" in t:
         return "Islamabad weather: 22°C, cool ambient climate."
     return "Ambient weather: ~30°C warm condition. Prioritize breathable fabrics if outdoors."
