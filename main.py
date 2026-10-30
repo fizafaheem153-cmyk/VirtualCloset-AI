@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import time
 from urllib.parse import quote_plus
 
 import requests
@@ -43,7 +44,12 @@ DEFAULT_CLOSET = [
     {"id": "M-03", "name": "Slim-Fit Charcoal Suit", "category": "outfit", "style": "western", "color": "charcoal", "formality": "formal"},
     {"id": "M-04", "name": "Cotton Crew-Neck T-Shirt", "category": "top", "style": "western", "color": "black", "formality": "casual"},
     {"id": "M-05", "name": "Puffer Winter Jacket", "category": "outerwear", "style": "western", "color": "navy", "formality": "casual"},
+    {"id": "M-06", "name": "Navy Chino Trousers", "category": "bottom", "style": "western", "color": "navy", "formality": "smart casual"},
+    {"id": "M-07", "name": "Black Leather Oxford Shoes", "category": "footwear", "style": "western", "color": "black", "formality": "formal"},
 ]
+# Who each item is for, so the AI never has to guess from the item name.
+for _i in DEFAULT_CLOSET:
+    _i["gender"] = "male" if _i["id"].startswith("M-") else ("unisex" if _i["id"] in ("A-03", "A-04") else "female")
 
 
 def get_weather(city: str, day: int):
@@ -77,7 +83,8 @@ def get_weather(city: str, day: int):
     return w
 
 
-def call_llm(prompt: str):
+def call_llm(prompt: str, max_tokens: int = 2500):
+    """Returns (parsed_json, meta). meta has the model used, token counts and latency."""
     key = os.environ.get("GROQ_API_KEY")
     if not key:
         raise RuntimeError("GROQ_API_KEY is not set in Vercel Environment Variables")
@@ -85,13 +92,14 @@ def call_llm(prompt: str):
     errors = []
     for model in models:
         for use_json_mode in (True, False):
-            body = {"model": model, "temperature": 0.4, "max_completion_tokens": 2500,
+            body = {"model": model, "temperature": 0.4, "max_completion_tokens": max_tokens,
                     "messages": [{"role": "system", "content": "You are an expert personal fashion stylist. Reply with JSON only."},
                                  {"role": "user", "content": prompt}]}
             if use_json_mode:
                 body["response_format"] = {"type": "json_object"}
+            t0 = time.time()
             try:
-                r = requests.post(GROQ_URL, headers={"Authorization": f"Bearer {key}"}, json=body, timeout=40)
+                r = requests.post(GROQ_URL, headers={"Authorization": f"Bearer {key}"}, json=body, timeout=25)
             except Exception as e:
                 errors.append(f"{model}: {e}")
                 break
@@ -100,7 +108,11 @@ def call_llm(prompt: str):
                 m = re.search(r"\{.*\}", text, re.S)
                 if m:
                     try:
-                        return json.loads(m.group(0))
+                        usage = r.json().get("usage") or {}
+                        meta = {"model": model, "prompt_tokens": usage.get("prompt_tokens", 0),
+                                "completion_tokens": usage.get("completion_tokens", 0),
+                                "latency_ms": int((time.time() - t0) * 1000), "failed_attempts": len(errors)}
+                        return json.loads(m.group(0)), meta
                     except Exception:
                         pass
                 errors.append(f"{model}: unreadable reply")
@@ -154,6 +166,16 @@ def health():
             "models": os.environ.get("GROQ_MODELS") or DEFAULT_MODELS}
 
 
+@app.get("/api/selftest")
+def selftest():
+    """Makes one tiny real AI call, to prove the key and models still work."""
+    try:
+        out, meta = call_llm('Reply with exactly this JSON: {"ok": true}', max_tokens=800)
+        return {"ok": bool(out.get("ok")), **meta}
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)[:400]}, status_code=503)
+
+
 @app.post("/api/recommend")
 def recommend(payload: dict):
     query = (payload.get("query") or "").strip()[:600] or "Style me an outfit for today"
@@ -174,6 +196,8 @@ LIVE WEATHER (real forecast): {json.dumps(w)}
 CLOSET (only these exist): {json.dumps(closet)}
 
 Style one complete outfit using ONLY closet items (use their exact "id"). Consider the weather numbers, rain chance, UV, the occasion and dress code, and the wearer.
+Only pick items whose "gender" matches the wearer or is "unisex".
+Describe the weather strictly with the LIVE WEATHER fields above (condition, temperatures, rain_chance, uv). Never invent weather words: do not say "overcast", "humid" or "sunny" unless the data says so.
 If something important is missing (umbrella, jacket, sunglasses, bag, shoes...), list it in "missing" so the user can buy it.
 Return JSON exactly like:
 {{"summary": "one friendly sentence", "reasoning": "2-3 sentences linking weather + occasion to the choices",
@@ -181,23 +205,26 @@ Return JSON exactly like:
  "tips": ["tip 1", "tip 2", "tip 3"]}}"""
 
     ai_used = True
+    rule_meta = {"model": "rule-based", "prompt_tokens": 0, "completion_tokens": 0, "latency_ms": 0, "failed_attempts": None}
     try:
-        out = call_llm(prompt)
+        out, meta = call_llm(prompt)
     except Exception as e:
         print("LLM failure:", e)
-        out, ai_used = rule_based(closet, w, query), False
+        out, ai_used, meta = rule_based(closet, w, query), False, rule_meta
         out["note"] = str(e)[:300]
 
     by_id = {i["id"]: i for i in closet}
+    # item ids the AI returned that are NOT in the closet (hallucinated). Counted, then dropped.
+    dropped = [i for i in out.get("item_ids", []) if i not in by_id]
     items = [by_id[i] for i in out.get("item_ids", []) if i in by_id]
     if not items:
         out = rule_based(closet, w, query)
         items = [by_id[i] for i in out["item_ids"] if i in by_id]
-        ai_used = False
+        ai_used, meta = False, rule_meta
     missing = [{**m, "links": shop_links(m.get("item", ""))} for m in out.get("missing", []) if m.get("item")][:4]
     return {"weather": w, "summary": out.get("summary", ""), "reasoning": out.get("reasoning", ""),
             "items": items, "missing": missing, "tips": out.get("tips", [])[:4],
-            "ai_used": ai_used, "note": out.get("note")}
+            "ai_used": ai_used, "note": out.get("note"), "meta": meta, "dropped_ids": dropped}
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -265,7 +292,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function save(){try{localStorage.setItem('closet',JSON.stringify(closet))}catch(e){}renderCloset()}
 function renderCloset(){$('closet').innerHTML=closet.map((i,k)=>`<div class="closet-item"><div><b>${esc(i.name)}</b> <small>${esc(i.category)} · ${esc(i.color)} · ${esc(i.style)}</small></div><span class="x" onclick="del(${k})">✕</span></div>`).join('')}
 function del(k){closet.splice(k,1);save()}
-function addItem(){const n=$('n').value.trim();if(!n)return;closet.push({id:'U-'+Date.now(),name:n,category:$('cat').value,color:$('col').value||'-',style:$('sty').value,formality:'casual'});$('n').value='';$('col').value='';save()}
+function addItem(){const n=$('n').value.trim();if(!n)return;closet.push({id:'U-'+Date.now(),name:n,category:$('cat').value,color:$('col').value||'-',style:$('sty').value,formality:'casual',gender:'unisex'});$('n').value='';$('col').value='';save()}
 function resetCloset(){closet=DEFAULT.slice();save()}
 const days=['Today','Tomorrow'];for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()+i);$('day').innerHTML+=`<option value="${i}">${i<2?days[i]+' — ':''}${d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}</option>`}
 async function go(){
@@ -282,6 +309,7 @@ async function go(){
   h+=`</div>`;
   if(d.missing.length)h+=`<div class="card"><h3>🛍️ Missing from your closet</h3>${d.missing.map(m=>`<p><b>${esc(m.item)}</b> — ${esc(m.why)}<br><span class="links">${m.links.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.store)}</a>`).join('')}</span></p>`).join('')}</div>`;
   if(!d.ai_used)h+=`<p class="note">AI stylist was unavailable, so a quick weather-based pick was used.</p>`;
+  if(d.meta)h+=`<p class="note">Answered by ${esc(d.meta.model)} · ${(d.meta.prompt_tokens||0)+(d.meta.completion_tokens||0)} tokens · ${d.meta.latency_ms||0} ms</p>`;
   $('out').innerHTML=h;
  }catch(e){$('out').innerHTML=`<div class="card err">Network error: ${esc(e.message)}</div>`}
  finally{b.disabled=false;b.textContent='🌸 Style My Outfit'}
